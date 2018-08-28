@@ -1,8 +1,6 @@
 GENERAL:
-  #截屏数量 
-  SCREENSHOT_COUNT: 500
-  #Crash时截图显示步骤数量
-  CRASH_PIC_COUNT: 10
+  #截屏数量
+  SCREENSHOT_COUNT: 1000
   #遍历深度
   MAX_DEPTH: 800
   #点击次数
@@ -11,28 +9,21 @@ GENERAL:
   DEFAULT_WAIT_SEC: 10
   #查找元素的间隔时间
   DEFAULT_POLLING_INTERVAL_SEC: 5
+  #Crash时截图显示步骤数量
+  CRASH_PIC_COUNT: 10
   #是否忽略Crash,设为true时,crash后会重启app然后继续遍历
   IGNORE_CRASH: true
+  #是否屏蔽DOM树在Log中的显示
+  DISABLE_DOM_DISPLAY: false
   #遍历的过程中进行向上划动操作  ！！！此项会加长遍历时间！！！
   ENABLE_VERTICAL_SWIPE: false
-  #运行时间限制(分钟)
-  CRAWLER_RUNNING_TIME: 1800
+  #UI遍历的时间限制(分钟)
+  CRAWLER_RUNNING_TIME: 5
   #忽略底部元素Bounds值
-  REMOVE_BOTTOM_BOUND: true
+  REMOVE_BOTTOM_BOUND: false
   #控制视频方向，竖屏或模屏
-  VIDEO_VERTICAL: true
+  VIDEO_VERTICAL: false
 
-#输出更多的log,主要用于调试工具用
-LOG:
-  #将性能数据写入数据库相关的log
-  DB_LOG: false
-  #性能数据相关log
-  PERF_LOG: false
-  #是否屏蔽DOM树在log中的显示
-  DOM_DISPLAY: false
-
-
-#一些默认值
 DEFAULT_VALUE:
   #Appium server IP， 0.0.0.0代表Server在本地
   APPIUM_SERVER_IP: 0.0.0.0
@@ -41,9 +32,6 @@ DEFAULT_VALUE:
   #IOS 才会用到WDA_PORT
   IOS_WDA_PORT: 8100
 
-INFLUXDB:
-  DB_PORT: 8086
-  DB_IP: localhost
 
 #设置事件百分比 各事件百分比之和为100
 MONKEY:
@@ -56,8 +44,7 @@ MONKEY:
   LONG_PRESS_RATIO: 1
   #Android Only
   HOME_KEY_RATIO: 1
-  #触发Back Key
-  BACK_KEY_RATIO: 1
+
   #手势操作
   #双击
   DOUBLE_TAP_RATIO: 5
@@ -97,39 +84,36 @@ MINI_PROGRAM:
 
 #以下的内容很关键，而且需要根据不同的APP定制
 CRITICAL_ELEMENT:
-  #Android包名和启动的Activity
-  #微信小程序用以下面注释的包名
-  ANDROID_PACKAGE: com.tencent.mm
-  ANDROID_MAIN_ACTIVITY: com.tencent.mm.ui.LauncherUI
-  #ANDROID_PACKAGE: com.xes.jazhanghui.activity
-  #ANDROID_MAIN_ACTIVITY: com.xes.jazhanghui.activity.mvp.start.StartActivity
+  #Android 包名和启动的Activity
+  ANDROID_PACKAGE: com.xes.jazhanghui.activity
+  ANDROID_MAIN_ACTIVITY: com.xes.jazhanghui.activity.mvp.start.StartActivity
 
-  #IOS Bundle ID com.apple.mobilesafari
-  IOS_BUNDLE_ID: com.tencent.xin
+  #IOS Bundle ID
+  IOS_BUNDLE_ID: com.xes.studentClient
   #手机桌面上显示的APP的名字
-  IOS_BUNDLE_NAME: 微信
+  IOS_BUNDLE_NAME: 学而思test
   #IPA名字的前缀
-  IOS_IPA_NAME: wechat
+  IOS_IPA_NAME: xesapp
 
-
-#构建XPATH需要的一些内容
-  #UI底部TabBar 多个id时用or拼接 如'@resource-id="id1" or @resource-id="id2"'
-  ANDROID_BOTTOM_TAB_BAR_ID: '@resource-id="com.huxiu:id/footer_bar"'
+#构建XPATH需要的一些内容   #注意属性值要加引号''
+  #UI底部TabBar
+  ANDROID_BOTTOM_TAB_BAR_ID: '@resource-id="com.xes.jazhanghui.activity:id/bottomBar"'
   IOS_BOTTOM_TAB_BAR_TYPE: XCUIElementTypeTabBar
 
-  #注意值要加引号''
-  ANDROID_CLICK_XPATH_HEADER: ' ( string-length(@text)<30  or contains(@text,"允许") ) '
+  #注意属性值要加引号''
+  ANDROID_CLICK_XPATH_HEADER: '( @clickable="true" and string-length(@text)<30 or contains(@text,"允许") ) '
   IOS_CLICK_XPATH_HEADER: '@visible="true" and string-length(@value)<30'
 
-  #注意xpath中的属性值要加双引号""
   ANDROID_USERNAME:
     XPATH: '//*[@resource-id="com.xes.jazhanghui.activity:id/xes_login_username"]'
     ACTION: input
-    VALUE: '131xxxxx889'
+    VALUE: '13691034108'
+
   ANDROID_PASSWORD:
     XPATH: '//*[@resource-id="com.xes.jazhanghui.activity:id/xes_login_password"]'
     ACTION: input
-    VALUE: '123'
+    VALUE: '123456'
+
   ANDROID_LOGIN_BUTTON:
     XPATH: '//*[@resource-id="com.xes.jazhanghui.activity:id/xes_login_button"]'
     ACTION: click
@@ -138,90 +122,85 @@ CRITICAL_ELEMENT:
   IOS_USERNAME:
     XPATH: '//*[@type="XCUIElementTypeTextField"]'
     ACTION: input
-    VALUE: '130xxxxx456'
+    VALUE: '13691034108'
   IOS_PASSWORD:
     XPATH: '//*[@type="XCUIElementTypeSecureTextField" and @value="请输入登录密码"]'
     ACTION: input
-    VALUE: '123'
+    VALUE: '123456'
   IOS_LOGIN_BUTTON:
     XPATH: '//*[@type="XCUIElementTypeButton" and @name="登录" and @label="登录"]'
     ACTION: click
 
 
 LIST:
-  #当遇到下列文字时会触发Back Key
-  #BACK_KEY_TRIGGER_LIST:
-  #- la la la
+  #当遇到下列文字、控件类型时会触发Back Key
+  BACK_KEY_TRIGGER_LIST:
+  - 百度
 
-  #待输入文本的控制类型
   INPUT_CLASS_LIST:
-  - android.widget.TextView
+  - android.widget.EditText
   - XCUIElementTypeTextField
   - XCUIElementTypeSecureTextField
 
-  #待输入的文本（随机选中后选列表中的一个）
   INPUT_TEXT_LIST:
   - '123'
   - 'ABC'
 
-  #当发现App跳转到以下app时 会触发back键
   PRESS_BACK_KEY_PACKAGE_LIST:
   - 高德地图
   - com.autonavi.minimap
   - com.android.settings
 
-  #除了APP本身的包名外 根据以下包名判断是否跳出了APP,当app跳转到以下app时被认为是合法，会继续遍历操作
+  #除了APP本身的包名外 根据以下包名判断是否跳出了APP
   ANDROID_VALID_PACKAGE_LIST:
   - com.miui.securitycenter
   - com.android.server.telecom
   - com.lbe.security.miui
   - gallery
-  - packageinstaller
+  - installer
 
-  #同ANDROID_VALID_PACKAGE_LIST
   IOS_VALID_BUNDLE_LIST:
   - 照片
 
-  #白名单，遇到包含以下文本的控件，会多次点击（默认所有控件只点一次）
   ITEM_WHITE_LIST:
   - 确定
   - 允许
   - 退出
   - 取消
+  - 关闭
   - 已解决
+  - 下次再说
 
   #不点击包含以下文本的控件
   ITEM_BLACKLIST:
+  - 立即更新
   - 客服
   - 电话
+  - '0571 - 8522 5188'
   - 不允许
   - 拒绝
   - 拍照
   - 禁止
   - 呼叫
-  - 低电量模式
-  - 关闭
+  - '10108899'
+  - 第四个
+  - 第五个
+  - 立即升级
 
-
-  #不点击以下类型控件及其子元素
   IOS_EXCLUDE_BAR:
   #手机状态栏
   - XCUIElementTypeStatusBar
   #键盘
   - XCUIElementTypeKeyboard
 
-  #点击时排除以下类型的元素
   IOS_EXCLUDE_TYPE:
   - XCUIElementTypeOther
   - XCUIElementTypeKey
   - XCUIElementTypeWindow
-  - XCUIElementTypeApplication
 
   ANDROID_EXCLUDE_TYPE:
   - android.widget.FrameLayout
-  - android.widget.ImageButton
 
-  #解释待续
   NODE_NAME_EXCLUDE_LIST:
   - selected
   - instance
@@ -229,18 +208,14 @@ LIST:
   - naf
   - content
 
-  #解释待续
   STRUCTURE_NODE_NAME_EXCLUDE_LIST:
   #iOS
   #- value
   - name
 
   #Android
-  - text
+  #- text
 
 
-#设备udid 对应的设备名称
-d6744554:
-  DEVICE_NAME: XiaoMi4
-
-
+214be01a3254152a362fb9107ceb2db22ad3d559:
+  DEVICE_NAME: Justin's iPhone

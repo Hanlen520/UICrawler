@@ -17,13 +17,14 @@ public class Crawler {
     private static Map<String,String> summaryMap;//= new ListOrderedMap();
     private static boolean isMonkey = false;
     private static List<String> crashFileList;
-    private static File repoStepFile;
+    //private static File repoStepFile;
     private static boolean isReported = false;
     private static String udid;
 
     private static class CtrlCHandler extends Thread{
         @Override
         public void run(){
+            log.info("Pressing Ctrl + C...\n");
             PerfUtil.closeDataFile();
 
             if(!isMonkeyMode()){
@@ -31,16 +32,14 @@ public class Crawler {
             }
 
             if(!isReported) {
-                log.info("Handling Ctrl +C or process shut down event...");
+                log.info("Handling Ctrl + C shut down event...");
                 executeTask();
-                log.info("Everything is done.Both video and report are generated.");
+                log.info("Everything is done. Both video and report are generated.");
             }
         }
     }
 
     private static void executeTask(){
-        //repoStepFile = new File(ConfigUtil.getRootDir() +"/reproduceStep.txt");
-        //Util.writeFile(repoStepFile,XPathUtil.getRepoStep().toString());
         generateReport();
         generateVideo();
         isReported = true;
@@ -51,7 +50,8 @@ public class Crawler {
     }
 
     public static void main(String []args) throws Exception{
-        String version = "2.11 ---Aug/1/2018";
+        String version = "2.16 ---Aug/23/2018";
+
         log.info("Version is " + version);
         log.info("PC platform : " +  System.getProperty("os.name"));
 
@@ -77,7 +77,7 @@ public class Crawler {
         options.addOption("x", "write_to_db", false, "write performance data to influxDB");
 
         CommandLine commandLine = parser.parse( options, args );
-        String configFile;// = System.getProperty("user.dir") +  File.separator + "config.yml";
+        String configFile;
 
         if( commandLine.hasOption('h') ) {
             log.info(
@@ -294,8 +294,6 @@ public class Crawler {
         //Generate full video
         try {
             log.info("Generating full video file, please wait...");
-
-            //PictureUtil.picToVideo(ConfigUtil.getRootDir() + File.separator + "testing_steps.mp4", fullList, Driver.getScreenActualWidth(), Driver.getScreenActualHeight());
             PictureUtil.picToVideo(ConfigUtil.getRootDir() + File.separator + "testing_steps.mp4", fullList);
         }catch (Exception e){
             log.error("Fail to generate full.mp4 file");
@@ -305,6 +303,8 @@ public class Crawler {
         //Generate crash video
         try{
             if(crashFileList.size() > 0){
+
+                log.info("Generating " + crashFileList.size() +" crash video files...");
                 List<String> fullListWithoutPath = Util.getFileList(ConfigUtil.getScreenShotDir(), ".png",false);
                 log.info("Generating crash video file, please wait...");
                 int beginIndex = 0;
