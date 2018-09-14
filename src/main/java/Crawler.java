@@ -1,7 +1,6 @@
 import io.appium.java_client.AppiumDriver;
 import org.apache.commons.cli.*;
 import org.apache.commons.collections.map.ListOrderedMap;
-import org.openqa.selenium.By;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import util.*;
@@ -17,9 +16,10 @@ public class Crawler {
     private static Map<String,String> summaryMap;//= new ListOrderedMap();
     private static boolean isMonkey = false;
     private static List<String> crashFileList;
-    //private static File repoStepFile;
     private static boolean isReported = false;
     private static String udid;
+    private static String outputDir;
+    //private static File repoStepFile;
 
     private static class CtrlCHandler extends Thread{
         @Override
@@ -45,16 +45,17 @@ public class Crawler {
         isReported = true;
     }
 
-    public static boolean isMonkeyMode(){
+    private static boolean isMonkeyMode(){
         return isMonkey;
     }
 
+    @SuppressWarnings("unchecked")
     public static void main(String []args) throws Exception{
-        String version = "2.16 ---Aug/23/2018";
+        String version = "2.21 ---Sep/11/2018";
 
         log.info("Version is " + version);
         log.info("PC platform : " +  System.getProperty("os.name"));
-
+        log.info("System File Encoding: " + System.getProperty("file.encoding"));
         CommandLineParser parser = new DefaultParser( );
         Options options = new Options( );
         options.addOption("h", "help", false, "Print this usage information");
@@ -68,8 +69,10 @@ public class Crawler {
         options.addOption("l", "loop count", true, "Crawler loop count");
         options.addOption("m", "run monkey", false, "run in monkey mode");
         options.addOption("n", "ios_bundle_name", false, "ios bundle");
+        options.addOption("o", "output_dir", true, "ouptut directory" );
         options.addOption("p", "package", true, "Android package name" );
         options.addOption("r", "crawler_running_time", true, "minutes of running crawler ");
+        options.addOption("s", "server_ip", true, "appium server ip");
         options.addOption("t", "port", true, "appium port");
         options.addOption("u", "udid", true, "device serial");
         options.addOption("v", "version", false, "build version with date");
@@ -81,8 +84,9 @@ public class Crawler {
 
         if( commandLine.hasOption('h') ) {
             log.info(
-                    "\n    -a  Android package's main activity\n" +
-                    "    -b  iOS bundle id\n" +
+                    "\n"+
+                    "    -a  Android package's main activity\n" +
+                    "    -b  iOS bundle ID\n" +
                     "    -c  Maximum click count \n" +
                     "    -d  Maximum crawler UI depth \n" +
                     "    -e  Record performance data \n" +
@@ -91,8 +95,10 @@ public class Crawler {
                     "    -i  Ignore crash\n" +
                     "    -l  Execution loop count\n" +
                     "    -m  Run monkey\n" +
+                    "    -o  Output directory"+
                     "    -p  Android package name\n" +
                     "    -r  Crawler running time\n" +
+                    "    -s  Appium server ip\n" +
                     "    -t  Appium port\n" +
                     "    -u  Device serial\n" +
                     "    -v  Version\n" +
@@ -123,6 +129,17 @@ public class Crawler {
             return;
         }
 
+        if( commandLine.hasOption("o") ) {
+            outputDir = commandLine.getOptionValue('o').trim();
+
+            if(Util.isDir(outputDir)){
+                ConfigUtil.setOutputDir(outputDir);
+            }else{
+                log.info("output directory " + outputDir + " is not a directory or doesn't exist");
+                return;
+            }
+        }
+
         int loopCount = 1;
 
         if( commandLine.hasOption("l")) {
@@ -141,12 +158,16 @@ public class Crawler {
 
             log.info("Crawler loop No is " + (i +1));
 
-            summaryMap = new ListOrderedMap();
+            summaryMap = (Map<String,String>) new ListOrderedMap();
             isReported = false;
             beginTime = new Date();
 
             //初始化配置文件
             ConfigUtil.initialize(configFile, udid);
+
+            if( commandLine.hasOption("s") ) {
+                ConfigUtil.setServerIp(commandLine.getOptionValue('s').trim());
+            }
 
             if (commandLine.hasOption("a")) {
                 ConfigUtil.setActivityName(commandLine.getOptionValue('a'));
@@ -198,7 +219,7 @@ public class Crawler {
 
             Util.createDir(ConfigUtil.getRootDir());
 
-            AppiumDriver appiumDriver = null;
+            AppiumDriver appiumDriver;
 
             //启动Appium
             if (Util.isAndroid(udid)) {
@@ -224,7 +245,7 @@ public class Crawler {
                 Driver.sleep(15);
 
                 if (commandLine.hasOption("e") && Util.isAndroid()) {
-                    PerfUtil.writeDataToFileAsyn(writeToDB);
+                    PerfUtil.writeDataToFileAsync(writeToDB);
                 }
 
                 if (commandLine.hasOption("e") && !Util.isAndroid()) {
@@ -234,15 +255,17 @@ public class Crawler {
                 //初始化Xpath内容
                 XPathUtil.initialize(udid);
 
+                String pageSource = Driver.getPageSource();
+
                 if (commandLine.hasOption("m")) {
                     //开始Monkey测试
                     log.info("----------------Run in monkey mode-----------");
                     isMonkey = true;
-                    XPathUtil.monkey();
+                    XPathUtil.monkey(pageSource);
                 } else {
                     //开始遍历UI
                     log.info("------------Run in crawler mode----------------");
-                    XPathUtil.getNodesFromFile(Driver.getPageSource(), 0);
+                    XPathUtil.getNodesFromFile(pageSource, 0);
                     //Driver.getPageSource();
                     //String xpath = "//android.widget.Button[@text=\"允许\" and @scrollable=\"false\" and @resource-id=\"android:id/button1\" and @password=\"false\" and @package=\"com.lbe.security.miui\" and @long-clickable=\"false\" and @index=\"1\" and @focused=\"false\" and @focusable=\"true\" and @enabled=\"true\" and @clickable=\"true\" and @class=\"android.widget.Button\" and @checkable=\"false\"]";
                     //Driver.findElement(By.xpath(xpath));
@@ -273,18 +296,6 @@ public class Crawler {
             Driver.driver.quit();
         }
     }
-
-    private static void showClickedItems(){
-        HashSet<String> clickedSet = XPathUtil.getSet();
-        log.info(clickedSet.size() + " elements are clicked");
-
-        for(String str: clickedSet){
-            log.info(str);
-        }
-
-        log.info("==============list end==========");
-    }
-
 
     private static void generateVideo(){
         log.info("Method : generateVideo()");
@@ -332,8 +343,8 @@ public class Crawler {
         log.info("Complete generating video file!");
     }
 
-    public static List<String> getCrashSteps(String crashName){
-        List<String> stepList = new ArrayList();
+    private static List<String> getCrashSteps(String crashName){
+        List<String> stepList = new ArrayList<>();
 
         int picCount = (int)ConfigUtil.getLongValue(ConfigUtil.CRASH_PIC_COUNT);
         List<String> screenshotList = Util.getFileList(ConfigUtil.getScreenShotDir(),".png",false);
@@ -350,7 +361,6 @@ public class Crawler {
         int endIndex = index + 2;
 
         log.info("Init StartIndex " + startIndex + " Init EndIndex " + endIndex);
-
 
         if(startIndex < 0){
             while(startIndex !=0){
@@ -370,7 +380,7 @@ public class Crawler {
         return stepList;
     }
 
-    public static void initReport(){
+    private static void initReport(){
         summaryMap.put("手机系统 - Mobile operating system",Driver.getPlatformName());
         summaryMap.put("系统版本 - OS version",Driver.getPlatformVersion());
         summaryMap.put("设备UUID - Device UUID",udid);
@@ -493,6 +503,18 @@ public class Crawler {
         ReportUtil.setDetailedList(detailedList);
         ReportUtil.setClickedList(clickedList);
         ReportUtil.generateReport(report);
-        log.info("\n\n------------------------------Test report :" + reportName + "\n\n");
+        log.info("\n\n------------------------------Test report : " + reportName + "\n\n");
     }
 }
+
+
+//    private static void showClickedItems(){
+//        HashSet<String> clickedSet = XPathUtil.getSet();
+//        log.info(clickedSet.size() + " elements are clicked");
+//
+//        for(String str: clickedSet){
+//            log.info(str);
+//        }
+//
+//        log.info("==============list end==========");
+//    }

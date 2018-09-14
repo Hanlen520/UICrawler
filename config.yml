@@ -1,6 +1,6 @@
 GENERAL:
   #截屏数量 
-  SCREENSHOT_COUNT: 500
+  SCREENSHOT_COUNT: 1000
   #Crash时截图显示步骤数量
   CRASH_PIC_COUNT: 10
   #遍历深度
@@ -16,11 +16,14 @@ GENERAL:
   #遍历的过程中进行向上划动操作  ！！！此项会加长遍历时间！！！
   ENABLE_VERTICAL_SWIPE: false
   #运行时间限制(分钟)
-  CRAWLER_RUNNING_TIME: 1800
+  CRAWLER_RUNNING_TIME: 240
   #忽略底部元素Bounds值
-  REMOVE_BOTTOM_BOUND: true
+  REMOVE_BOTTOM_BOUND: false
   #控制视频方向，竖屏或模屏
   VIDEO_VERTICAL: true
+  #每个UI变化X次时，检测是否需要自动登录
+  USER_LOGIN_INTERVVAL: 5
+
 
 #输出更多的log,主要用于调试工具用
 LOG:
@@ -41,9 +44,11 @@ DEFAULT_VALUE:
   #IOS 才会用到WDA_PORT
   IOS_WDA_PORT: 8100
 
+
 INFLUXDB:
   DB_PORT: 8086
   DB_IP: localhost
+
 
 #设置事件百分比 各事件百分比之和为100
 MONKEY:
@@ -51,8 +56,8 @@ MONKEY:
   SWIPE_RATIO: 4
   CLICK_RATIO: 70
   #点击MONKEY_SPECIAL_POINT_LIST中的坐标 主要用于触发"返回"功能
-  CLICK_SPECIAL_POINT_RATIO: 4
-  RESTART_APP_RATIO: 0
+  CLICK_SPECIAL_POINT_RATIO: 1
+  RESTART_APP_RATIO: 1
   LONG_PRESS_RATIO: 1
   #Android Only
   HOME_KEY_RATIO: 1
@@ -60,13 +65,16 @@ MONKEY:
   BACK_KEY_RATIO: 1
   #手势操作
   #双击
-  DOUBLE_TAP_RATIO: 5
+  DOUBLE_TAP_RATIO: 1
   #缩小(两指)
-  PINCH_RATIO: 5
+  PINCH_RATIO: 1
   #放大(两指)
-  UNPINCH_RATIO: 5
+  UNPINCH_RATIO: 1
   #拖拽
-  DRAG_RATIO: 5
+  DRAG_RATIO: 1
+  #通过Xpath点击元素的次数,若找不到相应的元素则会忽略当该事件，CLICK_ITEM_XPATH_LIST中填写待查找元素的xpath列表
+  CLICK_ITEM_BY_XPATH_RATIO: 5
+
 
 
 #Monkey相关的一些值
@@ -86,6 +94,9 @@ MONKEY_LIST:
   - 'radius,10'
   - '0,0'
 
+  CLICK_ITEM_XPATH_LIST:
+  - '//*[@resource-id="com.xes.jazhanghui.activity:id/iv_class_entrance_img"]'
+  - '//*[@resource-id="com.xes.jazhanghui.activity:id/tv_item_course"]'
 
 #小程序
 MINI_PROGRAM:
@@ -97,12 +108,13 @@ MINI_PROGRAM:
 
 #以下的内容很关键，而且需要根据不同的APP定制
 CRITICAL_ELEMENT:
-  #Android包名和启动的Activity
-  #微信小程序用以下面注释的包名
-  ANDROID_PACKAGE: com.tencent.mm
-  ANDROID_MAIN_ACTIVITY: com.tencent.mm.ui.LauncherUI
-  #ANDROID_PACKAGE: com.xes.jazhanghui.activity
-  #ANDROID_MAIN_ACTIVITY: com.xes.jazhanghui.activity.mvp.start.StartActivity
+  #微信小程序用下面的包名
+  #ANDROID_PACKAGE: com.tencent.mm
+  #ANDROID_MAIN_ACTIVITY: com.tencent.mm.ui.LauncherUI
+
+  #App包名和启动的Activity
+  ANDROID_PACKAGE: com.xes.jazhanghui.activity
+  ANDROID_MAIN_ACTIVITY: com.xes.jazhanghui.activity.mvp.start.StartActivity
 
   #IOS Bundle ID com.apple.mobilesafari
   IOS_BUNDLE_ID: com.tencent.xin
@@ -111,9 +123,7 @@ CRITICAL_ELEMENT:
   #IPA名字的前缀
   IOS_IPA_NAME: wechat
 
-
-#构建XPATH需要的一些内容
-  #UI底部TabBar 多个id时用or拼接 如'@resource-id="id1" or @resource-id="id2"'
+  #构建XPATH需要的一些内容,UI底部TabBar 多个id时用or拼接 如'@resource-id="id1" or @resource-id="id2"'
   ANDROID_BOTTOM_TAB_BAR_ID: '@resource-id="com.huxiu:id/footer_bar"'
   IOS_BOTTOM_TAB_BAR_TYPE: XCUIElementTypeTabBar
 
@@ -121,37 +131,48 @@ CRITICAL_ELEMENT:
   ANDROID_CLICK_XPATH_HEADER: ' ( string-length(@text)<30  or contains(@text,"允许") ) '
   IOS_CLICK_XPATH_HEADER: '@visible="true" and string-length(@value)<30'
 
-  #注意xpath中的属性值要加双引号""
-  ANDROID_USERNAME:
-    XPATH: '//*[@resource-id="com.xes.jazhanghui.activity:id/xes_login_username"]'
-    ACTION: input
-    VALUE: '131xxxxx889'
-  ANDROID_PASSWORD:
-    XPATH: '//*[@resource-id="com.xes.jazhanghui.activity:id/xes_login_password"]'
-    ACTION: input
-    VALUE: '123'
-  ANDROID_LOGIN_BUTTON:
-    XPATH: '//*[@resource-id="com.xes.jazhanghui.activity:id/xes_login_button"]'
-    ACTION: click
 
-  #IOS LOGIN_ELEMENT
-  IOS_USERNAME:
-    XPATH: '//*[@type="XCUIElementTypeTextField"]'
-    ACTION: input
-    VALUE: '130xxxxx456'
-  IOS_PASSWORD:
-    XPATH: '//*[@type="XCUIElementTypeSecureTextField" and @value="请输入登录密码"]'
-    ACTION: input
-    VALUE: '123'
-  IOS_LOGIN_BUTTON:
-    XPATH: '//*[@type="XCUIElementTypeButton" and @name="登录" and @label="登录"]'
-    ACTION: click
+#自动登录时查找控件所需要的信息,当找到列表中第一个元素时会按顺序操作以下元素。注意xpath中的属性值要加双引号""
+LOGIN_ELEMENTS:
+  #Android 登录相关元素及操作
+  LOGIN_ELEMENTS_ANDROID:
+    - ANDOIRD_LOGIN_CHANGE:
+        XPATH: '//*[@resource-id="com.xes.jazhanghui.activity:id/login_change"]'
+        ACTION: click
+    - ANDROID_USERNAME:
+        XPATH: '//*[@resource-id="com.xes.jazhanghui.activity:id/xes_login_username"]'
+        ACTION: input
+        VALUE: '13691034108'
+    - ANDROID_PASSWORD:
+        XPATH: '//*[@resource-id="com.xes.jazhanghui.activity:id/xes_login_password"]'
+        ACTION: input
+        VALUE: '123456'
+    - ANDROID_LOGIN_BUTTON:
+        XPATH: '//*[@resource-id="com.xes.jazhanghui.activity:id/xes_login_button"]'
+        ACTION: click
+  #iOS登录相关元素及操作
+  LOGIN_ELEMENTS_IOS:
+    - IOS_USERNAME:
+        XPATH: '//*[@type="XCUIElementTypeTextField"]'
+        ACTION: input
+        VALUE: '13691034108'
+    - IOS_PASSWORD:
+        XPATH: '//*[@type="XCUIElementTypeSecureTextField" and @value="请输入登录密码"]'
+        ACTION: input
+        VALUE: '123456'
+    - IOS_LOGIN_BUTTON:
+        XPATH: '//*[@type="XCUIElementTypeButton" and @name="登录" and @label="登录"]'
+        ACTION: click
+    - DRAG:
+        XPATH: '//*[@resource-id="com.xes.jazhanghui.activity:id/xes_login_username"]'
+        ACTION: drag
+        VALUE: '250,1050,800,1050,800,1550'
 
 
 LIST:
   #当遇到下列文字时会触发Back Key
-  #BACK_KEY_TRIGGER_LIST:
-  #- la la la
+  BACK_KEY_TRIGGER_LIST:
+  - huitui
 
   #待输入文本的控制类型
   INPUT_CLASS_LIST:
@@ -201,7 +222,7 @@ LIST:
   - 呼叫
   - 低电量模式
   - 关闭
-
+  - '//*[@text="去付款"]'
 
   #不点击以下类型控件及其子元素
   IOS_EXCLUDE_BAR:

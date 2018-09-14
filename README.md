@@ -21,7 +21,8 @@ QQ 技术交流群 ： 728183683
 * 统计每个Activity点击数量(Android)
 * 支持滑动动作
 * 支持根据关键字和控件类型触发Back key(Android)
-
+* 支持自动登录时的自定义操作：点击、拖拽、文本输入。 详见Config.yml中LOGIN_ELEMENTS部分内容
+* 黑名单支持XPath
 
 ### 2.Monkey功能及以下事件 Android/iOS 
 * 随机位置点击
@@ -56,13 +57,10 @@ QQ 技术交流群 ： 728183683
 
 
 ### 5.待开发功能
-* 划动半屏  划动一屏
-* 将性能数据通过grafana显示 
+* 划动半屏，划动一屏
 * 根据执行步骤重现bug
-* 黑名单支持XPath
-* 减少配置项
-* ID Monkey
-* ctrl c
+
+
 
 ## 运行工具
 
@@ -225,7 +223,7 @@ Android 查看apk 和 Main activity
 * SpringAOP https://blog.csdn.net/zknxx/article/details/53240959
 
 
-## Chnage History
+## Change History
 ### 2018-06-14  
 * 添加 UICrawler运行时间限制 CRAWLER_RUNNING_TIME 
 
@@ -295,3 +293,29 @@ Android 查看apk 和 Main activity
 ### 2018-08-23 v2.15
 * 修改视频生成只能是横屏的bug
 * 删掉Appium iOS启动的参数 PLATFORM_VERSION
+
+### 2018-09-05 v2.17
+* 在Config中增加DeviceName支持,用于输出的目录名字
+```
+5f5fa944c51bb0073b91736a6d7828a57f0a1b98:
+  DEVICE_NAME: Justin's_iPhone
+```
+
+### 2018-09-06 v2.18 有重要更新！！！
+* 将登录相关的元素查找信息及操作移到了 LOGIN_ELEMENTS
+* 增加了Drag 拖拽操作的支持
+* 修改了代码中的一些Warning
+
+
+### 2018-09-10 v2.20
+* 增加自定义输出路径 -o
+* 在输出的目录中将udid中的":"替换成"_"
+* 解决了Windows上report乱码的问题
+* 为Monkey增加自动登录功能 
+* 为Monkey增加待点击元素xpath列表
+
+
+### 2018-09-11 v2.21
+* 支持黑名单Xpath ITEM_BLACKLIST
+* 加入参数 -s 指定 Appium Server IP
+* UI遍历功能加入自动登录检查的间隔以提高运行效率 USER_LOGIN_INTERVVAL

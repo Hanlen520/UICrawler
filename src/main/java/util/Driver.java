@@ -69,11 +69,6 @@ public final class Driver {
         }
     }
 
-    public static void switchTo(){
-        log.info(MyLogger.getMethodName());
-        driver.switchTo();
-    }
-
     public static void ios_launchApp(){
         log.info(MyLogger.getMethodName());
         driver.launchApp();
@@ -294,10 +289,6 @@ public final class Driver {
 
     public static int getDeviceHeight(){
         log.info(MyLogger.getMethodName());
-//        log.info(util.MyLogger.getMethodName());
-//
-//        Dimension dimensions = driver.manage().window().getSize();
-//        return dimensions.getHeight();
 
         if(isLandscape()){
             return deviceWidth;
@@ -308,11 +299,7 @@ public final class Driver {
 
     public static int getDeviceWidth(){
         log.info(MyLogger.getMethodName());
-//        log.info(util.MyLogger.getMethodName());
-//
-//        Dimension dimensions = driver.manage().window().getSize();
-//        return dimensions.getWidth();
-        //if(driver.getOrientation().equals(ScreenOrientation.LANDSCAPE)){
+
         if(isLandscape()){
             return deviceHeight;
         }
@@ -759,19 +746,6 @@ public final class Driver {
         return findElement(MobileBy.iOSNsPredicateString(str), seconds);
     }
 
-
-//
-//    public static void iterateElementsById(String str){
-//
-//        List<MobileElement> list = util.Driver.findElementsById(str);
-//
-//        log.info("iterateElement with : " + str + " size is " +list.size());
-//
-//        for(MobileElement e :list){
-//            log.info(e.getText());
-//        }
-//    }
-
     public static MobileElement getFirstbyPredicateIOS(String str){
         MobileElement elem;
 
@@ -858,7 +832,7 @@ public final class Driver {
         //capabilities.setCapability("autoWebview", true);
         //capabilities.setCapability("xcodeOrgId", "7Q6C9D7LVN");//capabilities.setCapability("xcodeSigningId", "iPhone Developer");
 
-        String url = "http://" + ConfigUtil.getServerIP() + ":" + appiumPort + "/wd/hub";
+        String url = "http://" + ConfigUtil.getServerIp() + ":" + appiumPort + "/wd/hub";
         log.info(url);
         driver = new IOSDriver(new URL(url), capabilities);
         setWindowSize();
@@ -897,7 +871,7 @@ public final class Driver {
         capabilities.setCapability("unicodeKeyboard",true); //支持中文输入
         capabilities.setCapability("resetKeyboard",true); //重置输入法为系统默认
 
-        String url = "http://"+ ConfigUtil.getServerIP() +":" + port+"/wd/hub";
+        String url = "http://"+ ConfigUtil.getServerIp() +":" + port+"/wd/hub";
         log.info(url);
         driver = new AndroidDriver(new URL(url), capabilities);
         //初始化屏幕大小
@@ -967,6 +941,35 @@ public final class Driver {
         pressBack();
     }
 
+    public static void drag(List<String> pointsList){
+        log.info(MyLogger.getMethodName());
+        TouchAction dragAction = new TouchAction( driver);
+        List<PointOption> pointOptionList = new ArrayList<>();
+
+        if(pointsList.size()%2 != 0){
+            log.error("drag value is not configured correctly: " + pointOptionList.toString());
+            return;
+        }
+
+        try {
+            for(int i = 0; i < pointsList.size(); i = i +2){
+                int x = Integer.valueOf(pointsList.get(i));
+                int y = Integer.valueOf(pointsList.get(i+1));
+                pointOptionList.add(PointOption.point(x, y));
+            }
+            for ( int i = 0; i < pointOptionList.size(); i++ ){
+                if(i == 0){
+                    dragAction.press(pointOptionList.get(i)).waitAction(WaitOptions.waitOptions(Duration.ofMillis(1000)));
+                }else{
+                    dragAction.moveTo(pointOptionList.get(i)).waitAction(WaitOptions.waitOptions(Duration.ofMillis(1000)));
+                }
+            }
+            dragAction.release().perform();
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error("Fail to perform drag operation");
+        }
+    }
 
     public static void pressBack(){
         log.info("Method : pressBack");
@@ -1039,7 +1042,7 @@ public final class Driver {
     }
 
     public static String startLogRecord(){
-        String logName = ConfigUtil.getRootDir() + File.separator + ConfigUtil.getUdid() + "-" + Util.getDatetime() + ".log";
+        String logName = ConfigUtil.getRootDir() + File.separator + ConfigUtil.getDeviceName() + "-" + Util.getDatetime() + ".log";
 
         Runnable newRunnable = () -> {
 
@@ -1288,7 +1291,6 @@ public final class Driver {
         int screenHeight = dimensions.getHeight();
 
         //Xiao Mi 1080,1920  //iPhone 414  736
-
         int startX = 0;
         int endX = screenWidth / 2;
 
@@ -1299,11 +1301,6 @@ public final class Driver {
 
         int startY = screenHeight / 2;
         int endY = startY;
-
-//        startX = 0;
-//        endX = 100;
-//        startY = 100;
-//        endY = 100;
 
         if(!Util.isAndroid()){
             //TODO: 解决ios 相对坐标问题，  升级Java-client版本？？？
