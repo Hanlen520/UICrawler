@@ -24,6 +24,7 @@ public class ConfigUtil {
     private static boolean showDomXML = false;
     private static boolean dbLogEnabled = false;
     private static boolean perLogEnabled = false;
+    private static boolean generateVideo = true;
     private static boolean videoVertical = true;
     private static List<String> blackKeyList = new ArrayList<>();
 
@@ -46,17 +47,20 @@ public class ConfigUtil {
     public static final String ANDROID_BACK_KEY = "ANDROID_BACK_KEY";
     public static final String LOGIN_ELEMENTS_ANDROID = "LOGIN_ELEMENTS_ANDROID";
 
+    public static String ANDROID_PACKAGE = "ANDROID_PACKAGE";
+    public static String ANDROID_MAIN_ACTIVITY = "ANDROID_MAIN_ACTIVITY";
+
     //iOS
+    public static String IOS_IPA_NAME = "IOS_IPA_NAME";
+    public static String IOS_BUNDLE_NAME = "IOS_BUNDLE_NAME";
+    public static String IOS_BUNDLE_ID = "IOS_BUNDLE_ID";
+
     public static final String IOS_EXCLUDE_TYPE = "IOS_EXCLUDE_TYPE";
     public static final String IOS_BOTTOM_TAB_BAR_TYPE = "IOS_BOTTOM_TAB_BAR_TYPE";
     public static final String IOS_CLICK_XPATH_HEADER = "IOS_CLICK_XPATH_HEADER";
-
     public static final String IOS_LOGIN_ELEMENTS = "LOGIN_ELEMENTS_IOS";
-    public static final String IOS_IPA_NAME = "IOS_IPA_NAME";
     public static final String IOS_WDA_PORT = "IOS_WDA_PORT";
-    public static final String IOS_BUNDLE_ID = "IOS_BUNDLE_ID";
     public static final String IOS_BACK_KEY = "IOS_BACK_KEY";
-    public static final String IOS_BUNDLE_NAME = "IOS_BUNDLE_NAME";
 
     //GENERAL CONFIG ITEM
     public static final String MAX_DEPTH = "MAX_DEPTH";
@@ -66,6 +70,7 @@ public class ConfigUtil {
     public static final String ENABLE_VERTICAL_SWIPE = "ENABLE_VERTICAL_SWIPE";
     public static final String DOM_DISPLAY = "DOM_DISPLAY" ;
     public static final String REMOVE_BOTTOM_BOUND = "REMOVE_BOTTOM_BOUND";
+    public static final String GENERATE_VIDEO = "GENERATE_VIDEO";
     public static final String VIDEO_VERTICAL = "VIDEO_VERTICAL";
     public static final String USER_LOGIN_INTERVVAL = "USER_LOGIN_INTERVVAL";
     public static final String APPIUM_SERVER_IP = "APPIUM_SERVER_IP";
@@ -84,13 +89,13 @@ public class ConfigUtil {
     public static final String ITEM_WHITE_LIST = "ITEM_WHITE_LIST";
     public static final String NODE_NAME_EXCLUDE_LIST = "NODE_NAME_EXCLUDE_LIST";
     public static final String STRUCTURE_NODE_NAME_EXCLUDE_LIST = "STRUCTURE_NODE_NAME_EXCLUDE_LIST";
-    public static final String PRESS_BACK_KEY_PACKAGE_LIST = "PRESS_BACK_KEY_PACKAGE_LIST";
+    public static final String PRESS_BACK_PACKAGE_LIST = "PRESS_BACK_PACKAGE_LIST";
     public static final String XPATH = "XPATH";
     public static final String ACTION = "ACTION";
     public static final String VALUE = "VALUE";
     public static final String INPUT_CLASS_LIST = "INPUT_CLASS_LIST";
     public static final String INPUT_TEXT_LIST = "INPUT_TEXT_LIST";
-    public static final String BACK_KEY_TRIGGER_LIST = "BACK_KEY_TRIGGER_LIST";
+    public static final String PRESS_BACK_TEXT_LIST = "PRESS_BACK_TEXT_LIST";
 
     //Monkey
     public static final String SWIPE_RATIO = "SWIPE_RATIO";
@@ -120,8 +125,11 @@ public class ConfigUtil {
     private static long clickCount;
 
     //MINI Programme
-    public static final String MINI_PROGRAM_NAME = "MINI_PROGRAM_NAME";
-    //public static final String MINI_PROGRAM_PROCESS = "MINI_PROGRAM_PROCESS";
+    public static final String WECHAT_MINI_PROGRAM_NAME = "WECHAT_MINI_PROGRAM_NAME";
+    //public static final String MINI_PROGRAM_PROCESS = "MINI_PROGRAM_PROCESS"; //com.tencent.mm:appbrand1
+
+    public static final String RUN_IN_WECHAT_MINI_PROGRAM_MODE = "RUN_IN_WECHAT_MINI_PROGRAM_MODE";
+    public static final String PRESS_BACK_ACTIVITY_LIST = "PRESS_BACK_ACTIVITY_LIST";
 
 
     public static ConfigUtil initialize(String file, String udid){
@@ -129,7 +137,6 @@ public class ConfigUtil {
         setUdid(udid);
 
         configItems = new HashMap<>();
-
         try {
             log.info("Reading config file " + file);
 
@@ -141,7 +148,8 @@ public class ConfigUtil {
 
             //初始化的顺序很重要
             //1.先设通用的值 GENERAL  2.设默认值 DEFAULT_VALUE 3.根据serial值去覆盖默认的属性值 4.然后其它值
-            List<String> keyList = new ArrayList(Arrays.asList("GENERAL","DEFAULT_VALUE","MONKEY","LIST","CRITICAL_ELEMENT","LOGIN_ELEMENTS","MONKEY_LIST","MINI_PROGRAM","LOG",udid));
+            List<String> keyList = new ArrayList(Arrays.asList("GENERAL","WECHAT_CONFIG","DEFAULT_VALUE","MONKEY",
+                    "LIST","CRITICAL_ELEMENT","LOGIN_ELEMENTS","MONKEY_LIST","LOG","INFLUXDB",udid));
             if(map.get(udid)!=null){
                 keyList.add(udid);
             }
@@ -160,7 +168,17 @@ public class ConfigUtil {
             dbLogEnabled = ConfigUtil.getBooleanValue(DB_LOG);
             perLogEnabled = ConfigUtil.getBooleanValue(PERF_LOG);
             showDomXML = ConfigUtil.getBooleanValue(DOM_DISPLAY,true);
+            generateVideo = ConfigUtil.getBooleanValue(GENERATE_VIDEO,true);
             videoVertical = ConfigUtil.getBooleanValue(VIDEO_VERTICAL,true);
+            boolean runInWechatMode = ConfigUtil.getBooleanValue(RUN_IN_WECHAT_MINI_PROGRAM_MODE,false);
+
+            if(runInWechatMode){
+                ANDROID_PACKAGE = "WECHAT_" + ANDROID_PACKAGE;
+                ANDROID_MAIN_ACTIVITY = "WECHAT_" + ANDROID_MAIN_ACTIVITY;
+                IOS_BUNDLE_ID = "WECHAT_" + IOS_BUNDLE_ID;
+                IOS_BUNDLE_NAME = "WECHAT_" + IOS_BUNDLE_NAME;
+                IOS_IPA_NAME = "WECHAT_" + IOS_IPA_NAME;
+            }
 
             if(outputDir == null) {
                 rootDir = System.getProperty("user.dir");
@@ -168,10 +186,10 @@ public class ConfigUtil {
                 rootDir = outputDir ;
             }
 
-            rootDir = rootDir + File.separator+ "crawler_output" + File.separator + getDeviceName().replace(":","_") + "-" + Util.getCurrentTimeFormat();;
+            rootDir = rootDir + File.separator+ "crawler_output" + File.separator + getDeviceName().replace(":","_").replace(" ","_") + "-" + Util.getCurrentTimeFormat();;
 
             //Create Root dir
-            Util.createDir(rootDir);
+            Util.createDirs(rootDir);
 
             serverIp = getStringValue("APPIUM_SERVER_IP");
             blackKeyList = getListValue(ITEM_BLACKLIST);
@@ -212,6 +230,10 @@ public class ConfigUtil {
         serverIp = ip;
     }
 
+    public static boolean isGenerateVideo() {
+        return generateVideo;
+    }
+
     public static boolean isVideoVertical() {
         return videoVertical;
     }
@@ -225,7 +247,7 @@ public class ConfigUtil {
     }
 
     public static boolean boundRemoved(){
-        return getBooleanValue(REMOVE_BOTTOM_BOUND,true);
+        return getBooleanValue(REMOVE_BOTTOM_BOUND,false);
     }
 
     public static String getIPAName(){
@@ -249,8 +271,9 @@ public class ConfigUtil {
     }
 
     public static String getPackageName() {
-        return getStringValue("ANDROID_PACKAGE");
+        return getStringValue(ANDROID_PACKAGE);
     }
+
     public static void setPackageName(String name) {
         setStringValue("ANDROID_PACKAGE",name);
     }
@@ -280,7 +303,7 @@ public class ConfigUtil {
     public static long getScreenshotCount() { return getLongValue("SCREENSHOT_COUNT");}
 
     public static String getActivityName() {
-        return getStringValue("ANDROID_MAIN_ACTIVITY");
+        return getStringValue(ANDROID_MAIN_ACTIVITY);
     }
     public static void setActivityName(String activityName) {
         setStringValue("ANDROID_MAIN_ACTIVITY",activityName);

@@ -32,6 +32,7 @@ public class XPathUtil {
     private static List<String> nodeNameExcludeList;
     private static List<String> structureNodeNameExcludeList;
     private static List<String> pressBackPackageList;
+    private static List<String> pressBackActivityList;
     private static List<String> backKeyTriggerList;
     private static List<String> xpathNotFoundElementList = new ArrayList<>();
     private static List<String> clickFailureElementList = new ArrayList<>();
@@ -296,7 +297,12 @@ public class XPathUtil {
         //xpath中排除以下属性, android和iOS  小写字母
         structureNodeNameExcludeList = ConfigUtil.getListValue(ConfigUtil.STRUCTURE_NODE_NAME_EXCLUDE_LIST);
         maxDepth = ConfigUtil.getDepth();
-        pressBackPackageList = ConfigUtil.getListValue(ConfigUtil.PRESS_BACK_KEY_PACKAGE_LIST);
+        pressBackPackageList = ConfigUtil.getListValue(ConfigUtil.PRESS_BACK_PACKAGE_LIST);
+        if(Driver.isMicroProgramme(appName)){
+            pressBackPackageList.remove("com.tencent.mm");
+        }
+
+        pressBackActivityList = ConfigUtil.getListValue(ConfigUtil.PRESS_BACK_ACTIVITY_LIST);
 
         if(Util.isAndroid()){
             backKeyXpath = ConfigUtil.getStringValue(ConfigUtil.ANDROID_BACK_KEY);
@@ -304,7 +310,7 @@ public class XPathUtil {
             backKeyXpath = ConfigUtil.getStringValue(ConfigUtil.IOS_BACK_KEY);
         }
 
-        backKeyTriggerList = ConfigUtil.getListValue(ConfigUtil.BACK_KEY_TRIGGER_LIST);
+        backKeyTriggerList = ConfigUtil.getListValue(ConfigUtil.PRESS_BACK_TEXT_LIST);
     }
 
     public static PackageStatus isValidPackageName(String packageName){
@@ -509,7 +515,6 @@ public class XPathUtil {
             log.error("Fail to log in!");
         }
 
-        log.info("userLoginCount is " + userLoginCount);
         userLoginCount ++;
 
         //检查运行时间
@@ -541,12 +546,27 @@ public class XPathUtil {
         log.info("Back key list size is " + backKeyTriggerList.size());
 
         //根据关键字触发Back Key
-        if( (backKeyTriggerList != null)  && (backKeyTriggerList.size() > 0) ){
+        if( backKeyTriggerList.size() > 0 ){
             for(String key : backKeyTriggerList){
                 if (currentXML.contains(key)){
-                    log.info("Back key trigger : " + key + " is found, press back key");
+                    log.info("Back key trigger text: " + key + " is found, press back key");
                     Driver.takeScreenShot();
-                    Driver.pressBack(repoStep);
+                    Driver.pressBack();
+                    currentXML = Driver.getPageSource();
+                    return currentXML;
+                }
+            }
+        }
+
+        if(pressBackActivityList.size() > 0){
+            String currentActivity = Driver.getCurrentActivity();
+            //log.error("Current activity " + currentActivity);
+
+            for(String key : pressBackActivityList){
+                if (currentActivity.contains(key)){
+                    log.info("Back key trigger activity: " + key + " is found, press back key");
+                    Driver.takeScreenShot();
+                    Driver.pressBack();
                     currentXML = Driver.getPageSource();
                     return currentXML;
                 }
@@ -895,11 +915,15 @@ public class XPathUtil {
     private static void triggerElementAction(String xpath, String action, Object value){
         MobileElement element = Driver.findElement(By.xpath(xpath));
 
-        log.info("Trigger element : " + xpath + " action : " + action + " value : " + null );
+        log.info("Trigger element : " + xpath + " action : " + action + " value : " + value );
 
         switch (action.toCharArray()[0]){
             case 'c'://click
                 element.click();
+
+                if(value != null){
+                    Driver.sleep(Integer.parseInt(value.toString()));
+                }
                 break;
             case 'i'://input
                 element.clear();

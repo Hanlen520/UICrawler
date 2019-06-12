@@ -123,6 +123,27 @@ public final class Util {
         return exeCmd(commandStr);
     }
 
+    public static boolean isActivityExist(String udid, String activityName){
+        if(!Util.isAndroid(udid) || activityName == null){
+            return false;
+        }
+
+        String findCmd = getGrep();
+
+        if(Util.isAndroid(udid)){
+            String res = exeCmd("adb -s " + udid + " shell dumpsys activity  | "  + findCmd + "  " + "mFocus");
+
+            res = res.toLowerCase();
+            activityName = activityName.toLowerCase();
+
+            if( res.contains(activityName)){
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public static boolean isProcessExist(String udid, String processName){
 
         if(processName == null){
@@ -205,6 +226,16 @@ public final class Util {
         }
 
         return file.mkdir();
+    }
+
+    public static boolean createDirs(String dir){
+        File file = new File(dir);
+
+        if(file.exists()){
+            return false;
+        }
+
+        return file.mkdirs();
     }
 
     public static void copyCrashFile(String src){

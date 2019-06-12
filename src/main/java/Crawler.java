@@ -13,13 +13,12 @@ public class Crawler {
     public static Logger log = LoggerFactory.getLogger(Crawler.class);
     private static Date beginTime = new Date();
     private static String logName;
-    private static Map<String,String> summaryMap;//= new ListOrderedMap();
+    private static Map<String,String> summaryMap;
     private static boolean isMonkey = false;
     private static List<String> crashFileList;
     private static boolean isReported = false;
     private static String udid;
     private static String outputDir;
-    //private static File repoStepFile;
 
     private static class CtrlCHandler extends Thread{
         @Override
@@ -41,7 +40,11 @@ public class Crawler {
 
     private static void executeTask(){
         generateReport();
-        generateVideo();
+
+        if (ConfigUtil.isGenerateVideo()) {
+            generateVideo();
+        }
+
         isReported = true;
     }
 
@@ -51,11 +54,8 @@ public class Crawler {
 
     @SuppressWarnings("unchecked")
     public static void main(String []args) throws Exception{
-        String version = "2.21 ---Sep/11/2018";
+        String version = "2.26 ---Feb/23/2019";
 
-        log.info("Version is " + version);
-        log.info("PC platform : " +  System.getProperty("os.name"));
-        log.info("System File Encoding: " + System.getProperty("file.encoding"));
         CommandLineParser parser = new DefaultParser( );
         Options options = new Options( );
         options.addOption("h", "help", false, "Print this usage information");
@@ -110,6 +110,8 @@ public class Crawler {
 
         if( commandLine.hasOption("v")){
             log.info(version);
+            //log.info("PC platform : " +  System.getProperty("os.name"));
+            log.info("System File Encoding: " + System.getProperty("file.encoding"));
             return;
         }
 
@@ -239,7 +241,6 @@ public class Crawler {
 
             Runtime.getRuntime().addShutdownHook(new CtrlCHandler());
 
-            //TODO:add 左划三次
             try {
                 //等待App完全启动,否则遍历不到元素
                 Driver.sleep(15);
@@ -402,8 +403,9 @@ public class Crawler {
         int index = 0;
         List<ArrayList<String>> detailedList = new ArrayList<>();
         List<ArrayList<String>> clickedList = new ArrayList<>();
-        //String crashDir = ConfigUtil.getRootDir() + File.separator + "crash" + File.separator;
-        String crashDir = "./crash" + File.separator;
+        String crashDir = ConfigUtil.getRootDir() + File.separator + "crash" + File.separator;
+        log.info("Crash dir is " + crashDir);
+        //String crashDir = "./crash" + File.separator;
         crashFileList = Util.getFileList(crashDir);
         int crashCount = crashFileList.size();
 
